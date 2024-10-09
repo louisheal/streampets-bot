@@ -11,6 +11,7 @@ from bots import ChatBot
 from message_announcer import MessageAnnouncer
 from utils import CHANNEL_NAME
 from trex import TRex
+from database import Database
 
 
 load_dotenv()
@@ -20,7 +21,8 @@ CORS(app)
 
 announcer = MessageAnnouncer()
 queue = JsonQueue('queue.json')
-bot = ChatBot(queue, os.getenv('BOT_TOKEN'), '!', [CHANNEL_NAME], announcer)
+database = Database()
+bot = ChatBot(queue, database, os.getenv('BOT_TOKEN'), '!', [CHANNEL_NAME], announcer)
 
 
 @app.route('/listen')
