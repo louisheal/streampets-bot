@@ -40,11 +40,15 @@ def viewers() -> list[TRex]:
   rexs = bot.get_viewer_rexs()
   return jsonify(rexs)
 
+def run_bot():
+  thread = Thread(target=bot.run, daemon=True)
+  thread.start()
+
+def create_app():
+  if not is_running_from_reloader():
+    run_bot()
+  return app
 
 if __name__ == '__main__':
-  
-  if not is_running_from_reloader():
-    thread = Thread(target=bot.run, daemon=True)
-    thread.start()
-
+  app = create_app()
   app.run(host="localhost")
