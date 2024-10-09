@@ -45,10 +45,12 @@ def viewers() -> list[TRex]:
 def run_bot():
   thread = Thread(target=bot.run, daemon=True)
   thread.start()
+  print("Bot running...")
 
 def create_app():
   if not is_running_from_reloader():
     run_bot()
+  print("App running...")
   return app
 
 if __name__ == '__main__':
