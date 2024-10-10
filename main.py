@@ -1,5 +1,6 @@
 import os
 from threading import Thread
+from pathlib import Path
 
 from flask import Flask, Response, stream_with_context, jsonify
 from flask_cors import CORS
@@ -7,11 +8,11 @@ from werkzeug.serving import is_running_from_reloader
 from dotenv import load_dotenv
 
 from queues import JsonQueue
-from bots import ChatBot
+from chat_bots import ChatBot
 from message_announcer import MessageAnnouncer
 from utils import CHANNEL_NAME
-from trex import TRex
-from database import Database
+from models import Color
+from database import SqlDatabase
 
 
 load_dotenv()
@@ -20,10 +21,9 @@ app = Flask(__name__)
 CORS(app)
 
 announcer = MessageAnnouncer()
-queue = JsonQueue('queue.json')
-database = Database()
-bot = ChatBot(queue, database, os.getenv('BOT_TOKEN'), '!', [CHANNEL_NAME], announcer)
-
+queue = JsonQueue(Path('data','queue.json'))
+database = SqlDatabase(Path('data','streampets.db'))
+bot = ChatBot(queue, database, announcer, os.getenv('BOT_TOKEN'), '!', [CHANNEL_NAME])
 
 @app.route('/listen')
 def listen():
@@ -38,9 +38,15 @@ def listen():
   return Response(stream(), mimetype='text/event-stream')
 
 @app.route('/viewers')
-def viewers() -> list[TRex]:
+def viewers():
   rexs = bot.get_viewer_rexs()
-  return jsonify(rexs)
+  json_rexs = [rex.to_dict() for rex in rexs]
+  return jsonify(json_rexs)
+
+@app.route('/colors')
+def get_colors():
+  colors = [color.name.lower() for color in Color]
+  return jsonify(colors)
 
 def run_bot():
   thread = Thread(target=bot.run, daemon=True)

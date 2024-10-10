@@ -1,21 +1,24 @@
+import json
 from twitchio.ext import commands
 
-from queues.simple_queue import SimpleQueue as IQueue
-from .commands import setup_queue_commands, setup_tag_commands
-from message_announcer import MessageAnnouncer
-from database import Database
-
 from utils import BOT_NAMES, CHANNEL_NAME
+from .commands import setup_queue_commands, setup_tag_commands
+
+from queues.simple_queue import SimpleQueue as IQueue
+from message_announcer import MessageAnnouncer
+from database import IDatabase
+from models import Color
 
 
 JOIN = 'JOIN'
 PART = 'PART'
 JUMP = 'JUMP'
+COLOR = 'COLOR'
 
 
 class ChatBot(commands.Bot):
 
-  def __init__(self, queue: IQueue, db: Database, token, prefix, channels, announcer: MessageAnnouncer):
+  def __init__(self, queue: IQueue, db: IDatabase, announcer: MessageAnnouncer, token, prefix, channels):
     self.announcer = announcer
     super().__init__(
       token=token,
@@ -31,25 +34,24 @@ class ChatBot(commands.Bot):
     setup_queue_commands(self)
     setup_tag_commands(self)
 
-  async def event_join(self, channel, user):
-    if user.name not in BOT_NAMES:
-      trex = self.db.get_rex_by_username(user.name)
-      self.announcer.announce(msg=trex, event=JOIN)
-      if user.name not in self.viewers:
-        self.viewers.append(user.name)
-
   async def event_part(self, user):
-    if user.name not in BOT_NAMES:
-      trex = self.db.get_rex_by_username(user.name)
-      self.announcer.announce(msg=trex, event=PART)
-      if user.name in self.viewers:
-        self.viewers.remove(user.name)
+    if user.name in BOT_NAMES:
+      return
+    
+    self.announcer.announce(msg=user.name, event=PART)
+    if user.name in self.viewers:
+      self.viewers.remove(user.name)
 
-  async def event_message(self, ctx):
-    if ctx.author and ctx.author.name not in self.viewers and ctx.author.name not in BOT_NAMES:
-      self.announcer.announce(msg=ctx.author.name, event=JOIN)
-      self.viewers.append(ctx.author.name)
-    await self.handle_commands(ctx)
+  async def event_message(self, message):
+    if not message.author:
+      return
+    
+    if message.author.name not in self.viewers and message.author.name not in BOT_NAMES:
+      trex = self.db.get_trex_by_username(message.author.name)
+      self.announcer.announce(msg=json.dumps(trex.to_dict()), event=JOIN)
+      self.viewers.append(message.author.name)
+
+    await self.handle_commands(message)
 
   def get_viewer_rexs(self):
     return self.db.get_all_rexs(self.viewers)
@@ -57,6 +59,15 @@ class ChatBot(commands.Bot):
   @commands.command(name='jump')
   async def command_jump(self, ctx):
     self.announcer.announce(msg=ctx.author.name, event=JUMP)
+
+  @commands.command(name='color')
+  async def command_color(self, ctx, color):
+    if color.lower() not in [c.name.lower() for c in Color]:
+      await ctx.send(f"{color} is not an available color!")
+      return
+    
+    trex = self.db.set_trex_color(ctx.author.name, Color.str_to_color(color))
+    self.announcer.announce(msg=json.dumps(trex.to_dict()), event=COLOR)
 
   @commands.command(name='commands')
   async def command_commands(self, ctx):
