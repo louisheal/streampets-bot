@@ -1,13 +1,13 @@
 import json
 from twitchio.ext import commands
 
-from utils import BOT_NAMES, CHANNEL_NAME
-from .commands import setup_queue_commands, setup_tag_commands
-
 from queues.simple_queue import SimpleQueue as IQueue
+from .commands import setup_queue_commands, setup_tag_commands
 from message_announcer import MessageAnnouncer
 from database import IDatabase
 from models import Color
+
+from utils import BOT_NAMES, CHANNEL_NAME
 
 
 JOIN = 'JOIN'

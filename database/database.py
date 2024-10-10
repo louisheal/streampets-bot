@@ -6,7 +6,7 @@ from models import Color, TRex
 class IDatabase(abc.ABC):
 
   @abc.abstractmethod
-  def get_all_rexs(self, viewers: list[str]) -> list[TRex]:
+  def get_all_trexs(self, viewers: list[str]) -> list[TRex]:
     pass
 
   @abc.abstractmethod
