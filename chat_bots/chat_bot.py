@@ -78,6 +78,7 @@ class ChatBot(commands.Bot):
 
   @commands.command(name='rps')
   async def command_rps(self, ctx, choice: str):
+    print("TEST")
     match choice.lower():
       case 'rock': await ctx.send('Paper! I win!')
       case 'paper': await ctx.send('Scissors! I win!')
