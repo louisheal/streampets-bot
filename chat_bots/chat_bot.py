@@ -46,6 +46,8 @@ class ChatBot(commands.Bot):
     if not message.author:
       return
     
+    print(f"Received message: {message.content}")
+
     if message.author.name not in self.viewers and message.author.name not in BOT_NAMES:
       trex = self.db.get_trex_by_username(message.author.name)
       self.announcer.announce(msg=json.dumps(trex.to_dict()), event=JOIN)
