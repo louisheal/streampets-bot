@@ -26,7 +26,8 @@ load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 DB_TOKEN = os.getenv('DB_TOKEN')
 DB_URL = os.getenv('DB_URL')
-FRONTEND_URL = os.getenv('FRONTEND_URL')
+OVERLAY_URL = os.getenv('OVERLAY_URL')
+STORE_URL = os.getenv('STORE_URL')
 
 announcer = MessageAnnouncer()
 queue = JsonQueue(Path('data','queue.json'))
@@ -48,7 +49,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=[FRONTEND_URL],
+  allow_origins=[OVERLAY_URL, STORE_URL],
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],

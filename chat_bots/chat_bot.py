@@ -44,12 +44,10 @@ class ChatBot(commands.Bot):
       self.viewers.remove(user.name)
 
   async def event_message(self, message):
-    if not message.author:
+    if not message.author or message.author.name in BOT_NAMES:
       return
-    
-    print(f"Received message: {message.content}")
 
-    if message.author.name not in self.viewers and message.author.name not in BOT_NAMES:
+    if message.author.name not in self.viewers:
       trex = self.db.get_trex_by_username(message.author.name)
       self.announcer.announce(msg=json.dumps(trex.to_dict()), event=JOIN)
       self.viewers.append(message.author.name)
