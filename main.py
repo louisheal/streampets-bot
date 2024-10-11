@@ -82,7 +82,7 @@ async def get_colors():
 
 @app.put('/colors')
 async def update_color(request: Request):
-  data = request.json()
+  data = await request.json()
   color = Color.str_to_color(data['color'])
   trex = database.set_trex_color('ljrexcodes', color)
   announcer.announce(msg=json.dumps(trex.to_dict()), event='COLOR')
