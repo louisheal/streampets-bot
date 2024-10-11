@@ -1,11 +1,13 @@
+import asyncio
 import os
-from threading import Thread
 from pathlib import Path
 import json
 
-from flask import Flask, Response, stream_with_context, jsonify, request
-from flask_cors import CORS
-from werkzeug.serving import is_running_from_reloader
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+
 from dotenv import load_dotenv
 
 from queues import JsonQueue
@@ -15,63 +17,72 @@ from utils import CHANNEL_NAME
 from models import Color
 from database import LibSqlDatabase
 
-
 load_dotenv()
 
-app = Flask(__name__)
-CORS(app)
+########################
+### Inititialisation ###
+########################
 
-db_token = os.getenv('DB_TOKEN')
-db_url = os.getenv('DB_URL')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+DB_TOKEN = os.getenv('DB_TOKEN')
+DB_URL = os.getenv('DB_URL')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 announcer = MessageAnnouncer()
 queue = JsonQueue(Path('data','queue.json'))
+database = LibSqlDatabase(DB_TOKEN, DB_URL)
 
-database = LibSqlDatabase(db_token, db_url)
+#######################
+### FastAPI Startup ###
+#######################
+
 bot = ChatBot(queue, database, announcer, os.getenv('BOT_TOKEN'), '!', [CHANNEL_NAME])
 
-@app.route('/listen')
-def listen():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+  asyncio.create_task(bot.connect())
+  print("Bot running...")
+  yield
+  bot.close()
 
-  @stream_with_context
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=[FRONTEND_URL],
+  allow_credentials=True,
+  allow_methods=["*"],
+  allow_headers=["*"],
+)
+
+##############
+### ROUTES ###
+##############
+
+@app.get('/listen')
+async def listen():
   def stream():
     messages = announcer.listen()
     while True:
       msg = messages.get()
       yield msg
 
-  return Response(stream(), mimetype='text/event-stream')
+  return StreamingResponse(stream(), media_type='text/event-stream')
 
-@app.route('/viewers')
-def viewers():
+@app.get('/viewers')
+async def viewers():
   rexs = bot.get_viewer_rexs()
   json_rexs = [rex.to_dict() for rex in rexs]
-  return jsonify(json_rexs)
+  return json_rexs
 
-@app.route('/colors', methods=['GET'])
-def get_colors():
+@app.get('/colors')
+async def get_colors():
   colors = [color.name.lower() for color in Color]
-  return jsonify(colors)
+  return colors
 
-@app.route('/colors', methods=['PUT'])
-def update_color():
-  data = request.get_json()
+@app.put('/colors')
+async def update_color(request: Request):
+  data = request.json()
   color = Color.str_to_color(data['color'])
   trex = database.set_trex_color('ljrexcodes', color)
   announcer.announce(msg=json.dumps(trex.to_dict()), event='COLOR')
-  return jsonify(success=True)
-
-def run_bot():
-  thread = Thread(target=bot.run, daemon=True)
-  thread.start()
-  print("Bot running...")
-
-def create_app():
-  if not is_running_from_reloader():
-    run_bot()
-  print("App running...")
-  return app
-
-if __name__ == '__main__':
-  app = create_app()
-  app.run(host="localhost")
+  return Response(status_code=status.HTTP_200_OK)

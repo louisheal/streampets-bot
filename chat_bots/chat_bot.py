@@ -30,6 +30,7 @@ class ChatBot(commands.Bot):
     self.curr_tag = CHANNEL_NAME.lower()
     self.failed_tags = []
     self.viewers = []
+    self.tragic = 0
 
     setup_queue_commands(self)
     setup_tag_commands(self)
@@ -57,6 +58,11 @@ class ChatBot(commands.Bot):
 
   def get_viewer_rexs(self):
     return self.db.get_all_trexs(self.viewers)
+  
+  @commands.command(name='tragic')
+  async def command_tragic(self, ctx):
+    self.tragic += 1
+    await ctx.send(f"LJRex has said tragic {self.tragic} times!")
 
   @commands.command(name='jump')
   async def command_jump(self, ctx):
