@@ -1,7 +1,11 @@
 import queue
 
-from utils import format_sse
 
+def format_sse(data: str, event=None) -> str:
+  msg = f'data: {data}\n\n'
+  if event is not None:
+    msg = f'event: {event}\n{msg}'
+  return msg
 
 class MessageAnnouncer:
 
@@ -14,6 +18,7 @@ class MessageAnnouncer:
     return q
   
   def announce(self, msg, event=None):
+    print(f"Announcing a {event} message to {len(self.listeners)} listeners!")
     msg = format_sse(msg, event)
     for i in reversed(range(len(self.listeners))):
       try:

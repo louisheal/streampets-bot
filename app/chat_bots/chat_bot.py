@@ -1,24 +1,17 @@
 import json
 from twitchio.ext import commands
 
-from utils import BOT_NAMES, CHANNEL_NAME
-from .commands import setup_queue_commands, setup_tag_commands
+from .commands import setup_queue_commands, setup_tag_commands, setup_pet_commands
+from app.json_queue import JsonQueue
+from app.announcer import MessageAnnouncer
+from app.database import Database
 
-from queues.simple_queue import SimpleQueue as IQueue
-from message_announcer import MessageAnnouncer
-from database import IDatabase
-from models import Color
-
-
-JOIN = 'JOIN'
-PART = 'PART'
-JUMP = 'JUMP'
-COLOR = 'COLOR'
+from app.consts import BOT_NAMES, CHANNEL_NAME, JOIN, PART
 
 
 class ChatBot(commands.Bot):
 
-  def __init__(self, queue: IQueue, db: IDatabase, announcer: MessageAnnouncer, token, prefix, channels):
+  def __init__(self, queue: JsonQueue, db: Database, announcer: MessageAnnouncer, token, prefix, channels):
     self.announcer = announcer
     super().__init__(
       token=token,
@@ -34,6 +27,7 @@ class ChatBot(commands.Bot):
 
     setup_queue_commands(self)
     setup_tag_commands(self)
+    setup_pet_commands(self)
 
   async def event_part(self, user):
     if user.name in BOT_NAMES:
@@ -62,19 +56,6 @@ class ChatBot(commands.Bot):
     self.tragic += 1
     await ctx.send(f"LJRex has said tragic {self.tragic} times!")
 
-  @commands.command(name='jump')
-  async def command_jump(self, ctx):
-    self.announcer.announce(msg=ctx.author.name, event=JUMP)
-
-  @commands.command(name='color')
-  async def command_color(self, ctx, color):
-    if color.lower() not in [c.name.lower() for c in Color]:
-      await ctx.send(f"{color} is not an available color!")
-      return
-    
-    trex = self.db.set_trex_color(ctx.author.name, Color.str_to_color(color))
-    self.announcer.announce(msg=json.dumps(trex.to_dict()), event=COLOR)
-
   @commands.command(name='commands')
   async def command_commands(self, ctx):
     commands = [f"!{command}" for command in self.commands.keys()]
@@ -82,7 +63,6 @@ class ChatBot(commands.Bot):
 
   @commands.command(name='rps')
   async def command_rps(self, ctx, choice: str):
-    print("TEST")
     match choice.lower():
       case 'rock': await ctx.send('Paper! I win!')
       case 'paper': await ctx.send('Scissors! I win!')
