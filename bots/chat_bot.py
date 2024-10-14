@@ -1,3 +1,5 @@
+# TODO: Delete /bots, use /chat_bots instead
+
 import json
 from twitchio.ext import commands
 
