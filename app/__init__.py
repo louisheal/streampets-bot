@@ -11,7 +11,7 @@ from .json_queue import JsonQueue
 from .announcer import MessageAnnouncer
 from .database import Database
 from .chat_bots import ChatBot
-from .consts import CHANNEL_NAME
+from .consts import CHANNEL_NAME, BOT_PREFIX
 
 
 load_dotenv()
@@ -26,7 +26,7 @@ announcer = MessageAnnouncer()
 json_queue = JsonQueue(Path('data','queue.json'))
 database = Database(DB_TOKEN, DB_URL)
 
-bot = ChatBot(json_queue, database, announcer, os.getenv('BOT_TOKEN'), '!', [CHANNEL_NAME])
+bot = ChatBot(json_queue, database, announcer, BOT_TOKEN, BOT_PREFIX, [CHANNEL_NAME])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
