@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -20,3 +21,15 @@ class Color(Enum):
     return Color.__color_map[string]
 
 Color._initialise_color_map()
+
+
+@dataclass
+class TRex:
+  username: str
+  color: Color
+
+  def to_dict(self):
+    return {
+      'username': self.username,
+      'color': self.color.name.lower(),
+    }

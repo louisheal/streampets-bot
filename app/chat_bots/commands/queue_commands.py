@@ -1,6 +1,7 @@
 from twitchio.ext import commands
 
-from utils import to_ordinal, CHANNEL_NAME
+from app.utils import to_ordinal
+from app.consts import CHANNEL_NAME
 
 
 def setup_queue_commands(bot):

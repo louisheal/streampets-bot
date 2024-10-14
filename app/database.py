@@ -1,10 +1,9 @@
 import libsql_client
 
-from database import IDatabase
-from models import Color, TRex
+from app.models import Color, TRex
 
 
-class LibSqlDatabase(IDatabase):
+class Database():
 
   def __init__(self, token, url) -> None:
     self.token = token
