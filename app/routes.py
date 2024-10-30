@@ -67,7 +67,7 @@ async def update_color(request: Request):
 def auth_twitch():
   oauth_state = secrets.token_hex(16)
   response = RedirectResponse(get_auth_url(oauth_state))
-  response.set_cookie('oauth_state', oauth_state, path='/')
+  response.set_cookie('oauth_state', oauth_state)
   return response
 
 @router.get('/callback')
@@ -91,7 +91,7 @@ def callback(request: Request, state = None, code = None):
     return HTTPException(401, detail="Invalid Twitch access token")
 
   session_id = secrets.token_hex(16)
-  response.set_cookie('session_id', session_id, path='/')
+  response.set_cookie('session_id', session_id, samesite='none')
   sessions[session_id] = twitch_user
 
   print(sessions)
