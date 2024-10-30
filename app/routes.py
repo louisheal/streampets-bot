@@ -85,16 +85,13 @@ def callback(request: Request, state = None, code = None):
     return HTTPException(400, detail="Missing code parameter")
 
   twitch_user = get_user(code)
-  print(twitch_user)
   if twitch_user is None:
     logging.critical("Endpoint /callback accessed with invalid code")
     return HTTPException(401, detail="Invalid Twitch access token")
 
   session_id = secrets.token_hex(16)
-  response.set_cookie('session_id', session_id, samesite='none', secure=True)
+  response.set_cookie('session_id', session_id, domain='streampets.louisheal.com')
   sessions[session_id] = twitch_user
-
-  print(sessions)
 
   logging.info(f"User {twitch_user.id} has successfully logged in")
   return response
@@ -120,6 +117,7 @@ def get_user_from_session_id(request: Request, response: Response):
   return asdict(sessions[session_id])
 
 def get_auth_url(state):
+  print(REDIRECT_URI)
   return (f"https://id.twitch.tv/oauth2/authorize?client_id={CLIENT_ID}&force_verify=true&redirect_uri={REDIRECT_URI}"
           f"&response_type=code&scope=user:read:email&state={state}")
 
