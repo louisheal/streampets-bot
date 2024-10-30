@@ -91,7 +91,7 @@ def callback(request: Request, state = None, code = None):
     return HTTPException(401, detail="Invalid Twitch access token")
 
   session_id = secrets.token_hex(16)
-  response.set_cookie('session_id', session_id, samesite='none')
+  response.set_cookie('session_id', session_id, samesite='none', secure=True)
   sessions[session_id] = twitch_user
 
   print(sessions)
