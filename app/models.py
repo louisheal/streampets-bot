@@ -9,6 +9,7 @@ class Color(Enum):
   ORANGE = 3
   GREEN = 4
   RED = 5
+  PINK = 6
 
   __color_map = {}
 
