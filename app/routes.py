@@ -26,6 +26,7 @@ CLIENT_ID = os.getenv('CLIENT_ID')
 CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 REDIRECT_URI = os.getenv('REDIRECT_URI')
 STORE_URL = os.getenv('STORE_URL')
+DOMAIN = os.getenv('DOMAIN')
 
 sessions = {}
 
@@ -90,7 +91,7 @@ def callback(request: Request, state = None, code = None):
     return HTTPException(401, detail="Invalid Twitch access token")
 
   session_id = secrets.token_hex(16)
-  response.set_cookie('session_id', session_id, domain='streampets.louisheal.com')
+  response.set_cookie('session_id', session_id, domain=DOMAIN)
   sessions[session_id] = twitch_user
 
   logging.info(f"User {twitch_user.id} has successfully logged in")
