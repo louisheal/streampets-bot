@@ -143,4 +143,4 @@ def get_user(code) -> Optional[TwitchUser]:
 
   user_data = user_response['data'][0]
   rex = database.get_trex_by_username(user_data['display_name'].lower())
-  return TwitchUser(user_data['id'], user_data['display_name'], user_data['profile_image_url'], rex.color)
+  return TwitchUser(user_data['id'], user_data['display_name'], user_data['profile_image_url'], rex.color.name.lower())
