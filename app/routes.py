@@ -19,6 +19,7 @@ class TwitchUser:
    id: str
    username: str
    profile_pic: str
+   color: str
 
 load_dotenv()
 
@@ -141,4 +142,5 @@ def get_user(code) -> Optional[TwitchUser]:
   }).json()
 
   user_data = user_response['data'][0]
-  return TwitchUser(user_data['id'], user_data['display_name'], user_data['profile_image_url'])
+  rex = database.get_trex_by_username(user_data['display_name'].lower())
+  return TwitchUser(user_data['id'], user_data['display_name'], user_data['profile_image_url'], rex.color)
