@@ -62,7 +62,7 @@ async def update_color(request: Request):
   username = sessions[session_id].username.lower()
   color = Color.str_to_color(data['color'])
   trex = database.set_trex_color(username, color)
-  announcer.announce(msg=json.dumps(trex.to_dict()), event='COLOR')
+  announcer.announce(msg=json.dumps(trex.to_dict()), event=f'COLOR-{username}')
   return Response(status_code=status.HTTP_200_OK)
 
 @router.get('/auth/twitch')
