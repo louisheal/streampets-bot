@@ -1,4 +1,6 @@
 import json
+from jose import jwt
+import base64
 
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse, RedirectResponse
@@ -28,9 +30,10 @@ CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 REDIRECT_URI = os.getenv('REDIRECT_URI')
 STORE_URL = os.getenv('STORE_URL')
 DOMAIN = os.getenv('DOMAIN')
+EXT_SECRET = os.getenv('EXT_SECRET')
+
 
 sessions = {}
-
 
 router = APIRouter()
 
@@ -58,8 +61,9 @@ async def get_colors():
 @router.put('/colors')
 async def update_color(request: Request):
   data = await request.json()
-  session_id = request.cookies.get('session_id')
-  username = sessions[session_id].username.lower()
+  username = 'ljrexcodes'
+  # session_id = request.cookies.get('session_id')
+  # username = sessions[session_id].username.lower()
   color = Color.str_to_color(data['color'])
   trex = database.set_trex_color(username, color)
   # TODO: Move event name handling to central location
@@ -108,17 +112,17 @@ def logout(response: Response, session_id = Cookie(None)):
   return {'message': f"{twitch_user.username}_logged_out"}
 
 @router.get('/user')
-def get_user_from_session_id(request: Request, response: Response):
-  session_id = request.cookies.get('session_id')
+def get_user_from_session_id(request: Request):
+  jwt_token = request.headers.get('x-extension-jwt')
+  key = base64.b64decode(EXT_SECRET)
+  data = jwt.decode(jwt_token, key)
 
-  if session_id is None:
-    return None
-  
-  if session_id not in sessions:
-    response.delete_cookie('session_id')
-    return None
-  
-  return asdict(sessions[session_id])
+  # user_id = data['user_id']
+
+  # get username from user_id
+
+  # rex = database.get_trex_by_username("ljrexcodes")
+  # return asdict(TwitchUser("","ljrexcodes","",rex.color.name.lower()))
 
 def get_auth_url(state):
   print(REDIRECT_URI)
