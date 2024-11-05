@@ -11,7 +11,7 @@ from .json_queue import JsonQueue
 from .announcer import MessageAnnouncer
 from .database import Database
 from .chat_bots import ChatBot
-from .consts import BOT_PREFIX
+from .consts import BOT_PREFIX, CHANNEL_NAME
 
 
 load_dotenv()
@@ -21,7 +21,6 @@ DB_TOKEN = os.getenv('DB_TOKEN')
 DB_URL = os.getenv('DB_URL')
 OVERLAY_URL = os.getenv('OVERLAY_URL')
 STORE_URL = os.getenv('STORE_URL')
-CHANNEL_NAME = os.getenv('CHANNEL_NAME')
 
 announcer = MessageAnnouncer()
 json_queue = JsonQueue(Path('data','queue.json'))
