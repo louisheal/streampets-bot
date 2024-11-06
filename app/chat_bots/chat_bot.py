@@ -1,4 +1,3 @@
-from pathlib import Path
 from twitchio.ext import commands
 
 from .commands import setup_queue_commands, setup_tag_commands, setup_pet_commands
@@ -25,11 +24,9 @@ class ChatBot(commands.Bot):
     self.viewers = []
     self.tragic = 0
 
-    self.load_module(Path('commands','pet_commands'))
-
     setup_queue_commands(self)
     setup_tag_commands(self)
-    # setup_pet_commands(self)
+    setup_pet_commands(self)
 
   async def event_part(self, user):
     if user.name in BOT_NAMES:
@@ -47,7 +44,6 @@ class ChatBot(commands.Bot):
 
     if username not in self.viewers:
       trex = self.db.get_trex_by_username(username)
-      # TODO: Announcer factory methods
       self.announcer.announce_join(username, trex.color)
       self.viewers.append(username)
 
