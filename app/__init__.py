@@ -11,11 +11,12 @@ from .json_queue import JsonQueue
 from .announcer import MessageAnnouncer
 from .database import Database
 from .chat_bots import ChatBot
-from .consts import BOT_PREFIX, CHANNEL_NAME
+from .config import BOT_PREFIX, CHANNEL_NAME
 
 
 load_dotenv()
 
+# TODO: Retrieve from config
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 DB_TOKEN = os.getenv('DB_TOKEN')
 DB_URL = os.getenv('DB_URL')

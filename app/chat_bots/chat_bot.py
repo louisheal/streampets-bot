@@ -1,4 +1,4 @@
-import json
+from pathlib import Path
 from twitchio.ext import commands
 
 from .commands import setup_queue_commands, setup_tag_commands, setup_pet_commands
@@ -6,7 +6,6 @@ from app.json_queue import JsonQueue
 from app.announcer import MessageAnnouncer
 from app.database import Database
 
-from app.consts import JOIN, PART
 from app.config import CHANNEL_NAME, BOT_NAMES
 
 
@@ -26,28 +25,31 @@ class ChatBot(commands.Bot):
     self.viewers = []
     self.tragic = 0
 
+    self.load_module(Path('commands','pet_commands'))
+
     setup_queue_commands(self)
     setup_tag_commands(self)
-    setup_pet_commands(self)
+    # setup_pet_commands(self)
 
   async def event_part(self, user):
     if user.name in BOT_NAMES:
       return
     
-    # TODO: Announcer factory methods
-    self.announcer.announce(msg=user.name, event=PART)
+    self.announcer.announce_part(user.name)
     if user.name in self.viewers:
       self.viewers.remove(user.name)
 
   async def event_message(self, message):
     if not message.author or message.author.name in BOT_NAMES:
       return
+    
+    username = message.author.name
 
-    if message.author.name not in self.viewers:
-      trex = self.db.get_trex_by_username(message.author.name)
+    if username not in self.viewers:
+      trex = self.db.get_trex_by_username(username)
       # TODO: Announcer factory methods
-      self.announcer.announce(msg=json.dumps(trex.to_dict()), event=JOIN)
-      self.viewers.append(message.author.name)
+      self.announcer.announce_join(username, trex.color)
+      self.viewers.append(username)
 
     await self.handle_commands(message)
 

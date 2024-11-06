@@ -9,8 +9,8 @@ def setup_pet_commands(bot):
 
   @commands.command(name='jump')
   async def command_jump(ctx):
-    # TODO: Make announcer factory methods
-    bot.announcer.announce(msg=ctx.author.name, event=f'JUMP-{ctx.author.name}')
+    username = ctx.author.name
+    bot.announcer.announce_jump(username)
 
   @commands.command(name='color')
   async def command_color(ctx, color):
@@ -18,8 +18,9 @@ def setup_pet_commands(bot):
       await ctx.send(f"{color} is not an available color!")
       return
     
-    trex = bot.db.set_trex_color(ctx.author.name, Color.str_to_color(color))
-    bot.announcer.announce(msg=json.dumps(trex.to_dict()), event=f'COLOR-{ctx.author.name}')
+    username = ctx.author.name
+    bot.db.set_trex_color(username, Color.str_to_color(color))
+    bot.announcer.announce_color(username, color)
 
   bot.add_command(command_jump)
   bot.add_command(command_color)

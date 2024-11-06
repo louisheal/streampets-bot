@@ -60,10 +60,8 @@ async def update_color(request: Request):
 
   data = await request.json()
   color = Color.str_to_color(data['color'])
-  trex = database.set_trex_color(username, color)
-  # TODO: Move event name handling to central location
-    # announcer.color_event(username, color)
-  announcer.announce(msg=json.dumps(trex.to_dict()), event=f'COLOR-{username}')
+  database.set_trex_color(username, color)
+  announcer.announce_color(username, color)
   return Response(status_code=status.HTTP_200_OK)
 
 @router.get('/user')
