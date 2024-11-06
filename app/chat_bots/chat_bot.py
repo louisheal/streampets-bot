@@ -6,7 +6,8 @@ from app.json_queue import JsonQueue
 from app.announcer import MessageAnnouncer
 from app.database import Database
 
-from app.consts import BOT_NAMES, CHANNEL_NAME, JOIN, PART
+from app.consts import JOIN, PART
+from app.config import CHANNEL_NAME, BOT_NAMES
 
 
 class ChatBot(commands.Bot):
@@ -33,6 +34,7 @@ class ChatBot(commands.Bot):
     if user.name in BOT_NAMES:
       return
     
+    # TODO: Announcer factory methods
     self.announcer.announce(msg=user.name, event=PART)
     if user.name in self.viewers:
       self.viewers.remove(user.name)
@@ -43,6 +45,7 @@ class ChatBot(commands.Bot):
 
     if message.author.name not in self.viewers:
       trex = self.db.get_trex_by_username(message.author.name)
+      # TODO: Announcer factory methods
       self.announcer.announce(msg=json.dumps(trex.to_dict()), event=JOIN)
       self.viewers.append(message.author.name)
 

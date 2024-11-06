@@ -1,18 +1,23 @@
-import json
-from jose import jwt
 import base64
+import json
 
+from dataclasses import dataclass, asdict
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import StreamingResponse
+from jose import jwt
+import requests
 
 from app.models import Color
 from app import announcer, bot, database
 
-import os
-import requests
-from dataclasses import dataclass, asdict
-from dotenv import load_dotenv
+from app.config import (
+  CLIENT_ID,
+  CLIENT_SECRET,
+  EXT_SECRET,
+)
 
+
+# TODO: Move to models.py
 @dataclass
 class TwitchUser:
    id: str
@@ -20,17 +25,8 @@ class TwitchUser:
    profile_pic: str
    color: str
 
-load_dotenv()
-
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-REDIRECT_URI = os.getenv('REDIRECT_URI')
-STORE_URL = os.getenv('STORE_URL')
-DOMAIN = os.getenv('DOMAIN')
-EXT_SECRET = os.getenv('EXT_SECRET')
-
-
 router = APIRouter()
+
 
 @router.get('/listen')
 async def listen():
@@ -53,29 +49,12 @@ async def get_colors():
   colors = [color.name.lower() for color in Color]
   return colors
 
-# receive jwt token
-# verify and retrieve userID
-# retrieve username
-# set trex color
-# announce color change
-
 @router.put('/colors')
 async def update_color(request: Request):
-  jwt_token = request.headers.get('x-extension-jwt')
-  # TODO: Is this worth doing on startup ?
-  key = base64.b64decode(EXT_SECRET)
-  jwt_data = jwt.decode(jwt_token, key)
+  jwt_data = decode_jwt(request.headers.get('x-extension-jwt'))
 
   user_id = jwt_data['user_id']
-  access_token = get_access_token()
-
-  response = requests.get('https://api.twitch.tv/helix/users',
-                          params={'id': user_id},
-                          headers={
-                            'Authorization': f'Bearer {access_token}',
-                            'Client-ID': CLIENT_ID,
-                          })
-  user_data = response.json()['data'][0]
+  user_data = get_user_data_by_user_id(user_id)
 
   username = user_data['display_name'].lower()
 
@@ -89,20 +68,10 @@ async def update_color(request: Request):
 
 @router.get('/user')
 def get_user_data(request: Request):
-  jwt_token = request.headers.get('x-extension-jwt')
-  key = base64.b64decode(EXT_SECRET)
-  jwt_data = jwt.decode(jwt_token, key)
+  jwt_data = decode_jwt(request.headers.get('x-extension-jwt'))
 
   user_id = jwt_data['user_id']
-  access_token = get_access_token()
-
-  response = requests.get('https://api.twitch.tv/helix/users',
-                          params={'id': user_id},
-                          headers={
-                            'Authorization': f'Bearer {access_token}',
-                            'Client-ID': CLIENT_ID,
-                          })
-  user_data = response.json()['data'][0]
+  user_data = get_user_data_by_user_id(user_id)
 
   username = user_data['display_name'].lower()
   profile_pic = user_data['profile_image_url']
@@ -110,11 +79,24 @@ def get_user_data(request: Request):
   rex = database.get_trex_by_username(username)
   return asdict(TwitchUser(user_id,username,profile_pic,rex.color.name.lower()))
 
-def get_access_token():
+def decode_jwt(token):
+  # TODO: Do this at startup ???
+  key = base64.b64decode(EXT_SECRET)
+  return jwt.decode(token, key)
+
+def __access_token():
   response = requests.post('https://id.twitch.tv/oauth2/token', data={
     'client_id': CLIENT_ID,
     'client_secret': CLIENT_SECRET,
     'grant_type': 'client_credentials',
   }).json()
-
   return response.get('access_token')
+
+def get_user_data_by_user_id(user_id):
+  access_token = __access_token()
+  return requests.get('https://api.twitch.tv/helix/users',
+    params={'id': user_id},
+    headers={
+      'Authorization': f'Bearer {access_token}',
+      'Client-ID': CLIENT_ID,
+  }).json()['data'][0]

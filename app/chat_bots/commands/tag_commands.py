@@ -2,7 +2,7 @@ from random import randint
 
 from twitchio.ext import commands
 
-from app.consts import CHANNEL_NAME
+from app.config import CHANNEL_NAME
 
 
 def setup_tag_commands(bot):

@@ -3,13 +3,13 @@ import json
 from twitchio.ext import commands
 
 from app.models import Color
-from app.consts import JUMP, COLOR
 
 
 def setup_pet_commands(bot):
 
   @commands.command(name='jump')
   async def command_jump(ctx):
+    # TODO: Make announcer factory methods
     bot.announcer.announce(msg=ctx.author.name, event=f'JUMP-{ctx.author.name}')
 
   @commands.command(name='color')
