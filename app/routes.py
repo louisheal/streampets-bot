@@ -2,17 +2,14 @@ import json
 from jose import jwt
 import base64
 
-from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
-from fastapi.responses import StreamingResponse, RedirectResponse
+from fastapi import APIRouter, Request, Response, status
+from fastapi.responses import StreamingResponse
 
 from app.models import Color
 from app import announcer, bot, database
 
 import os
-import logging
 import requests
-import secrets
-from typing import Optional
 from dataclasses import dataclass, asdict
 from dotenv import load_dotenv
 
@@ -32,8 +29,6 @@ STORE_URL = os.getenv('STORE_URL')
 DOMAIN = os.getenv('DOMAIN')
 EXT_SECRET = os.getenv('EXT_SECRET')
 
-
-sessions = {}
 
 router = APIRouter()
 
@@ -58,12 +53,33 @@ async def get_colors():
   colors = [color.name.lower() for color in Color]
   return colors
 
+# receive jwt token
+# verify and retrieve userID
+# retrieve username
+# set trex color
+# announce color change
+
 @router.put('/colors')
 async def update_color(request: Request):
+  jwt_token = request.headers.get('x-extension-jwt')
+  # TODO: Is this worth doing on startup ?
+  key = base64.b64decode(EXT_SECRET)
+  jwt_data = jwt.decode(jwt_token, key)
+
+  user_id = jwt_data['user_id']
+  access_token = get_access_token()
+
+  response = requests.get('https://api.twitch.tv/helix/users',
+                          params={'id': user_id},
+                          headers={
+                            'Authorization': f'Bearer {access_token}',
+                            'Client-ID': CLIENT_ID,
+                          })
+  user_data = response.json()['data'][0]
+
+  username = user_data['display_name'].lower()
+
   data = await request.json()
-  username = 'ljrexcodes'
-  # session_id = request.cookies.get('session_id')
-  # username = sessions[session_id].username.lower()
   color = Color.str_to_color(data['color'])
   trex = database.set_trex_color(username, color)
   # TODO: Move event name handling to central location
@@ -71,82 +87,34 @@ async def update_color(request: Request):
   announcer.announce(msg=json.dumps(trex.to_dict()), event=f'COLOR-{username}')
   return Response(status_code=status.HTTP_200_OK)
 
-@router.get('/auth/twitch')
-def auth_twitch():
-  oauth_state = secrets.token_hex(16)
-  response = RedirectResponse(get_auth_url(oauth_state))
-  response.set_cookie('oauth_state', oauth_state)
-  return response
-
-@router.get('/callback')
-def callback(request: Request, state = None, code = None):
-  response = RedirectResponse(STORE_URL)
-
-  oauth_state = request.cookies.get('oauth_state')
-  if state is None or state != oauth_state:
-    logging.critical("Endpoint /callback accessed with incorrect state")
-    return HTTPException(400, detail="State mismatch error")
-  response.delete_cookie('oauth_state')
-
-  if not code:
-    logging.critical("Endpoint /callback accessed without code")
-    return HTTPException(400, detail="Missing code parameter")
-
-  twitch_user = get_user(code)
-  if twitch_user is None:
-    logging.critical("Endpoint /callback accessed with invalid code")
-    return HTTPException(401, detail="Invalid Twitch access token")
-
-  session_id = secrets.token_hex(16)
-  response.set_cookie('session_id', session_id, domain=DOMAIN)
-  sessions[session_id] = twitch_user
-
-  logging.info(f"User {twitch_user.id} has successfully logged in")
-  return response
-
-@router.get('/logout')
-def logout(response: Response, session_id = Cookie(None)):
-  twitch_user = sessions.pop(session_id, None)
-  response.delete_cookie('session_id')
-  logging.info(f"{twitch_user.id} has been logged out")
-  return {'message': f"{twitch_user.username}_logged_out"}
-
 @router.get('/user')
-def get_user_from_session_id(request: Request):
+def get_user_data(request: Request):
   jwt_token = request.headers.get('x-extension-jwt')
   key = base64.b64decode(EXT_SECRET)
-  data = jwt.decode(jwt_token, key)
+  jwt_data = jwt.decode(jwt_token, key)
 
-  # user_id = data['user_id']
+  user_id = jwt_data['user_id']
+  access_token = get_access_token()
 
-  # get username from user_id
+  response = requests.get('https://api.twitch.tv/helix/users',
+                          params={'id': user_id},
+                          headers={
+                            'Authorization': f'Bearer {access_token}',
+                            'Client-ID': CLIENT_ID,
+                          })
+  user_data = response.json()['data'][0]
 
-  # rex = database.get_trex_by_username("ljrexcodes")
-  # return asdict(TwitchUser("","ljrexcodes","",rex.color.name.lower()))
+  username = user_data['display_name'].lower()
+  profile_pic = user_data['profile_image_url']
 
-def get_auth_url(state):
-  print(REDIRECT_URI)
-  return (f"https://id.twitch.tv/oauth2/authorize?client_id={CLIENT_ID}&force_verify=true&redirect_uri={REDIRECT_URI}"
-          f"&response_type=code&scope=user:read:email&state={state}")
+  rex = database.get_trex_by_username(username)
+  return asdict(TwitchUser(user_id,username,profile_pic,rex.color.name.lower()))
 
-def get_user(code) -> Optional[TwitchUser]:
-  token_response = requests.post('https://id.twitch.tv/oauth2/token', params={
+def get_access_token():
+  response = requests.post('https://id.twitch.tv/oauth2/token', data={
     'client_id': CLIENT_ID,
     'client_secret': CLIENT_SECRET,
-    'code': code,
-    'grant_type': 'authorization_code',
-    'redirect_uri': REDIRECT_URI,
+    'grant_type': 'client_credentials',
   }).json()
 
-  access_token = token_response.get('access_token')
-  if not access_token:
-    return None
-
-  user_response = requests.get('https://api.twitch.tv/helix/users', headers={
-    'Client-ID': CLIENT_ID,
-    'Authorization': f'Bearer {access_token}'
-  }).json()
-
-  user_data = user_response['data'][0]
-  rex = database.get_trex_by_username(user_data['display_name'].lower())
-  return TwitchUser(user_data['id'], user_data['display_name'], user_data['profile_image_url'], rex.color.name.lower())
+  return response.get('access_token')
