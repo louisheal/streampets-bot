@@ -1,27 +1,24 @@
-import os
 from pathlib import Path
 
 import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 
 from .json_queue import JsonQueue
 from .announcer import MessageAnnouncer
 from .database import Database
 from .chat_bots import ChatBot
-from .config import BOT_PREFIX, CHANNEL_NAME
+from .config import (
+  BOT_PREFIX,
+  BOT_TOKEN,
+  CHANNEL_NAME,
+  DB_TOKEN,
+  DB_URL,
+  OVERLAY_URL,
+  STORE_URL,
+)
 
-
-load_dotenv()
-
-# TODO: Retrieve from config
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-DB_TOKEN = os.getenv('DB_TOKEN')
-DB_URL = os.getenv('DB_URL')
-OVERLAY_URL = os.getenv('OVERLAY_URL')
-STORE_URL = os.getenv('STORE_URL')
 
 announcer = MessageAnnouncer()
 json_queue = JsonQueue(Path('data','queue.json'))
