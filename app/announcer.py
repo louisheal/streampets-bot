@@ -2,12 +2,11 @@ import json
 import queue
 
 from app.models import Color, Viewer
-from app.consts import (
-  COLOR,
-  JOIN,
-  JUMP,
-  PART,
-)
+
+JOIN  = 'JOIN'
+PART  = 'PART'
+JUMP  = 'JUMP'
+COLOR = 'COLOR'
 
 
 def format_sse(data: str, event=None) -> str:

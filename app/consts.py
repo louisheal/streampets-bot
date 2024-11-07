@@ -1,4 +1,0 @@
-JOIN  = 'JOIN'
-PART  = 'PART'
-JUMP  = 'JUMP'
-COLOR = 'COLOR'

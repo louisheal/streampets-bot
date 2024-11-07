@@ -9,6 +9,9 @@ class Database():
     self.token = token
     self.url = url
 
+  def get_colors_by_user_ids(self, user_ids: list[str]) -> list[Color]:
+    return [self.get_color_by_user_id(user_id) for user_id in user_ids]
+
   def get_color_by_user_id(self, user_id: str) -> Color:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result_set = client.execute("SELECT colorID FROM viewers WHERE userID=?", (user_id,))

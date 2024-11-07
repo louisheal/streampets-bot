@@ -3,6 +3,7 @@ from twitchio.ext import commands
 from app.announcer import MessageAnnouncer
 from app.database import Database
 from app.models import Color, Viewer
+from app.helix import get_user_id_by_username
 
 from app.config import (
   CHANNEL_NAME,
@@ -27,12 +28,13 @@ class ChatBot(commands.Bot):
     return self.user_ids
 
   async def event_part(self, user):
+    user_id = get_user_id_by_username(user.name)
     if user.name in BOT_NAMES:
       return
     
-    self.announcer.announce_part(user.id)
-    if user.id in self.user_ids:
-      self.user_ids.remove(user.id)
+    self.announcer.announce_part(user_id)
+    if user_id in self.user_ids:
+      self.user_ids.remove(user_id)
 
   async def event_message(self, message):
     if not message.author or message.author.name in BOT_NAMES:
