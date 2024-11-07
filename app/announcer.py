@@ -1,6 +1,7 @@
 import json
 import queue
 
+from app.models import Color, Viewer
 from app.consts import (
   COLOR,
   JOIN,
@@ -25,23 +26,19 @@ class MessageAnnouncer:
     self.listeners.append(q)
     return q
   
-  # TODO: username -> userID
-  def announce_part(self, username):
-    self.__announce(msg=username, event=PART)
+  def announce_part(self, user_id: str) -> None:
+    self.__announce(msg=user_id, event=PART)
   
-  # TODO: username -> userID
-  def announce_color(self, username, color):
-    self.__announce(msg=color, event=f'{COLOR}-{username}')
+  def announce_color(self, user_id: str, color: Color) -> None:
+    self.__announce(msg=color.name.lower(), event=f'{COLOR}-{user_id}')
 
-  # TODO: username -> userID
-  def announce_join(self, username, color):
-    # TODO: encode (color, username, userID) into msg
-    msg = json.dumps({'color': color, 'username': username})
+  def announce_join(self, viewer: Viewer) -> None:
+    msg = json.dumps(viewer.to_dict())
     self.__announce(msg=msg, event=JOIN)
   
-  # TODO: username -> userID
-  def announce_jump(self, username):
-    self.__announce(msg=username, event=f'{JUMP}-{username}')
+  def announce_jump(self, user_id):
+    # TODO: Message can be none
+    self.__announce(msg=user_id, event=f'{JUMP}-{user_id}')
 
   def __announce(self, msg, event=None):
     msg = format_sse(msg, event)

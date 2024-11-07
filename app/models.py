@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
 
 class Color(Enum):
@@ -25,12 +26,19 @@ Color._initialise_color_map()
 
 
 @dataclass
-class TRex:
-  username: str
-  color: Color
+class Viewer:
+  user_id: str
+  username: Optional[str] = None
+  color: Optional[Color] = None
+
+  def __eq__(self, other: object) -> bool:
+    if isinstance(other, Viewer):
+      return self.user_id == other.user_id
+    return False
 
   def to_dict(self):
     return {
+      'userID': self.user_id,
       'username': self.username,
       'color': self.color.name.lower(),
     }

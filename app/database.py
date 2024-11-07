@@ -1,32 +1,22 @@
 import libsql_client
 
-from app.models import Color, TRex
+from app.models import Color, Viewer
 
 
 class Database():
 
-  def __init__(self, token, url) -> None:
+  def __init__(self, token: str, url: str) -> None:
     self.token = token
     self.url = url
 
-  # TODO: usernames -> userIDs
-  # TODO: ordered list Color[] / dict[userID][Color]
-  def get_all_trexs(self, usernames: list[str]) -> list[TRex]:
-    return [self.get_trex_by_username(username) for username in usernames]
+  def get_users_by_ids(self, user_ids: list[str]) -> list[Viewer]:
+    return [self.get_color_by_user_id(user_id) for user_id in user_ids]
 
-  # TODO: get color by userID
-  def get_trex_by_username(self, username: str) -> TRex:
+  def get_color_by_user_id(self, user_id: str) -> Color:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
-      result_set = client.execute("SELECT username, colorID FROM trexs WHERE username=?", (username,))
-      
-      if not result_set:
-        return TRex(username, Color.GREEN)
+      result_set = client.execute("SELECT colorID FROM viewers WHERE userID=?", (user_id,))
+      return Color.GREEN if not result_set else Color(result_set.rows[0][0])
 
-      username, color = result_set.rows[0]
-      return TRex(username, Color(color))
-
-  # TODO: set color of userID
-  def set_trex_color(self, username: str, color: Color) -> TRex:
+  def set_color_by_user_id(self, user_id: str, color: Color) -> None:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
-      client.execute("INSERT OR REPLACE INTO trexs (username, colorID) VALUES (?,?)", (username, color.value))
-    return TRex(username, color)
+      client.execute("INSERT OR REPLACE INTO viewers (userID, colorID) VALUES (?,?)", (user_id, color.value))

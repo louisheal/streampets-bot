@@ -1,32 +1,17 @@
 import base64
-import json
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import StreamingResponse
 from jose import jwt
-import requests
 
 from app.models import Color
 from app import announcer, bot, database
 
-from app.config import (
-  CLIENT_ID,
-  CLIENT_SECRET,
-  EXT_SECRET,
-)
+from app.config import EXT_SECRET
 
-
-# TODO: Move to models.py
-@dataclass
-class TwitchUser:
-   id: str
-   username: str
-   profile_pic: str
-   color: str
 
 router = APIRouter()
-
 
 @router.get('/listen')
 async def listen():
@@ -35,14 +20,13 @@ async def listen():
     while True:
       msg = messages.get()
       yield msg
-
   return StreamingResponse(stream(), media_type='text/event-stream')
 
 @router.get('/viewers')
 async def viewers():
-  rexs = bot.get_viewer_rexs()
-  json_rexs = [rex.to_dict() for rex in rexs]
-  return json_rexs
+  viewers = bot.get_viewers()
+  json_viewers = [viewer.to_dict() for viewer in viewers]
+  return json_viewers
 
 @router.get('/colors')
 async def get_colors():
@@ -52,49 +36,27 @@ async def get_colors():
 @router.put('/colors')
 async def update_color(request: Request):
   jwt_data = decode_jwt(request.headers.get('x-extension-jwt'))
-
   user_id = jwt_data['user_id']
-  user_data = get_user_data_by_user_id(user_id)
-
-  username = user_data['display_name'].lower()
 
   data = await request.json()
   color = Color.str_to_color(data['color'])
-  database.set_trex_color(username, color)
-  announcer.announce_color(username, color)
+
+  database.set_color_by_user_id(user_id, color)
+  announcer.announce_color(user_id, color)
+
   return Response(status_code=status.HTTP_200_OK)
 
 @router.get('/user')
 def get_user_data(request: Request):
   jwt_data = decode_jwt(request.headers.get('x-extension-jwt'))
-
   user_id = jwt_data['user_id']
-  user_data = get_user_data_by_user_id(user_id)
 
-  username = user_data['display_name'].lower()
-  profile_pic = user_data['profile_image_url']
+  color = database.get_color_by_user_id(user_id)
 
-  rex = database.get_trex_by_username(username)
-  return asdict(TwitchUser(user_id,username,profile_pic,rex.color.name.lower()))
+  # TODO: JSON format color ???
+  return color
 
 def decode_jwt(token):
   # TODO: Do this at startup ???
   key = base64.b64decode(EXT_SECRET)
   return jwt.decode(token, key)
-
-def __access_token():
-  response = requests.post('https://id.twitch.tv/oauth2/token', data={
-    'client_id': CLIENT_ID,
-    'client_secret': CLIENT_SECRET,
-    'grant_type': 'client_credentials',
-  }).json()
-  return response.get('access_token')
-
-def get_user_data_by_user_id(user_id):
-  access_token = __access_token()
-  return requests.get('https://api.twitch.tv/helix/users',
-    params={'id': user_id},
-    headers={
-      'Authorization': f'Bearer {access_token}',
-      'Client-ID': CLIENT_ID,
-  }).json()['data'][0]
