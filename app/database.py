@@ -1,6 +1,6 @@
 import libsql_client
 
-from app.models import Color, Viewer
+from app.models import Color
 
 
 class Database():
@@ -8,9 +8,6 @@ class Database():
   def __init__(self, token: str, url: str) -> None:
     self.token = token
     self.url = url
-
-  def get_users_by_ids(self, user_ids: list[str]) -> list[Viewer]:
-    return [self.get_color_by_user_id(user_id) for user_id in user_ids]
 
   def get_color_by_user_id(self, user_id: str) -> Color:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:

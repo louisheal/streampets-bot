@@ -4,8 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .announcer import MessageAnnouncer
-from .database import Database
 from .bot import ChatBot
+from .database import Database
+from .models import Viewer
 from .config import (
   DB_TOKEN,
   DB_URL,
@@ -13,10 +14,11 @@ from .config import (
   STORE_URL,
 )
 
+viewers: dict[str, Viewer] = {}
 
 announcer = MessageAnnouncer()
 database = Database(DB_TOKEN, DB_URL)
-bot = ChatBot(database, announcer)
+bot = ChatBot(database, announcer, viewers)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

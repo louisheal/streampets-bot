@@ -1,14 +1,18 @@
 import base64
+import requests
 
-from dataclasses import asdict
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import StreamingResponse
 from jose import jwt
 
-from app.models import Color
+from app.models import Color, Viewer
 from app import announcer, bot, database
 
-from app.config import EXT_SECRET
+from app.config import (
+  CLIENT_ID,
+  CLIENT_SECRET,
+  EXT_SECRET
+)
 
 
 router = APIRouter()
@@ -23,15 +27,19 @@ async def listen():
   return StreamingResponse(stream(), media_type='text/event-stream')
 
 @router.get('/viewers')
-async def viewers():
-  viewers = bot.get_viewers()
-  json_viewers = [viewer.to_dict() for viewer in viewers]
-  return json_viewers
+async def get_viewers():
+  user_ids = bot.get_user_ids()
+  viewers = []
+  for user_id in user_ids:
+    username = get_username_by_user_id(user_id)
+    color = database.get_color_by_user_id(user_id)
+    viewers.append(Viewer(user_id, username, color))
+  
+  return viewers
 
 @router.get('/colors')
 async def get_colors():
-  colors = [color.name.lower() for color in Color]
-  return colors
+  return [color.name.lower() for color in Color]
 
 @router.put('/colors')
 async def update_color(request: Request):
@@ -60,3 +68,20 @@ def decode_jwt(token):
   # TODO: Do this at startup ???
   key = base64.b64decode(EXT_SECRET)
   return jwt.decode(token, key)
+
+def __access_token():
+  response = requests.post('https://id.twitch.tv/oauth2/token', data={
+    'client_id': CLIENT_ID,
+    'client_secret': CLIENT_SECRET,
+    'grant_type': 'client_credentials',
+  }).json()
+  return response.get('access_token')
+
+def get_username_by_user_id(user_id):
+  access_token = __access_token()
+  return requests.get('https://api.twitch.tv/helix/users',
+    params={'id': user_id},
+    headers={
+      'Authorization': f'Bearer {access_token}',
+      'Client-ID': CLIENT_ID,
+  }).json()['data'][0]['login']

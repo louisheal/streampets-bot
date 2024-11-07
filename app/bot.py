@@ -21,31 +21,30 @@ class ChatBot(commands.Bot):
     )
     self.announcer = announcer
     self.db = db
-    self.viewers: list[Viewer] = []
+    self.user_ids: list[str] = []
 
-  def get_viewers(self):
-    return self.viewers
+  def get_user_ids(self):
+    return self.user_ids
 
   async def event_part(self, user):
     if user.name in BOT_NAMES:
       return
     
     self.announcer.announce_part(user.id)
-    if Viewer(user.id) in self.viewers:
-      self.viewers.remove(Viewer(user.id))
+    if user.id in self.user_ids:
+      self.user_ids.remove(user.id)
 
   async def event_message(self, message):
     if not message.author or message.author.name in BOT_NAMES:
       return
-    
-    user_id = message.author.id
-    username = message.author.name
-    color = self.db.get_color_by_user_id(user_id)
 
-    viewer = Viewer(user_id, username, color)
-    if viewer not in self.viewers:
-      self.announcer.announce_join(viewer)
-      self.viewers.append(viewer)
+    user_id = message.author.id
+    if user_id not in self.user_ids:
+      username = message.author.name
+      color = self.db.get_color_by_user_id(user_id)
+
+      self.user_ids.append(user_id)
+      self.announcer.announce_join(Viewer(user_id, username, color))
 
     await self.handle_commands(message)
   
@@ -60,11 +59,7 @@ class ChatBot(commands.Bot):
       return
     
     user_id = ctx.author.id
-    username = ctx.author.name
     color = Color.str_to_color(color)
-    
-    self.viewers.remove(Viewer(user_id))
-    self.viewers.append(Viewer(user_id, username, color))
 
     self.db.set_color_by_user_id(user_id, color)
     self.announcer.announce_color(user_id, color)

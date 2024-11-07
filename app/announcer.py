@@ -10,7 +10,7 @@ from app.consts import (
 )
 
 
-def format_sse(data: str, event=None) -> str:
+def __format_sse(data: str, event=None) -> str:
   msg = f'data: {data}\n\n'
   if event is not None:
     msg = f'event: {event}\n{msg}'
@@ -41,7 +41,7 @@ class MessageAnnouncer:
     self.__announce(msg=user_id, event=f'{JUMP}-{user_id}')
 
   def __announce(self, msg, event=None):
-    msg = format_sse(msg, event)
+    msg = __format_sse(msg, event)
     for i in reversed(range(len(self.listeners))):
       try:
         self.listeners[i].put_nowait(msg)
