@@ -21,7 +21,7 @@ class ChatBot(commands.Bot):
     )
     self.announcer = announcer
     self.db = db
-    self.user_ids: list[str] = []
+    self.user_ids = set()
 
   def get_user_ids(self):
     return self.user_ids
@@ -43,7 +43,7 @@ class ChatBot(commands.Bot):
       username = message.author.name
       color = self.db.get_color_by_user_id(user_id)
 
-      self.user_ids.append(user_id)
+      self.user_ids.add(user_id)
       self.announcer.announce_join(Viewer(user_id, username, color))
 
     await self.handle_commands(message)
