@@ -25,18 +25,16 @@ class MessageAnnouncer:
     self.listeners.append(q)
     return q
   
+  def announce_join(self, viewer: Viewer) -> None:
+    self.__announce(msg=json.dumps(viewer.to_dict()), event=JOIN)
+
   def announce_part(self, user_id: str) -> None:
     self.__announce(msg=user_id, event=PART)
   
   def announce_color(self, user_id: str, color: Color) -> None:
-    self.__announce(msg=color.name.lower(), event=f'{COLOR}-{user_id}')
+    self.__announce(msg=json.dumps(color.to_dict()), event=f'{COLOR}-{user_id}')
 
-  def announce_join(self, viewer: Viewer) -> None:
-    msg = json.dumps(viewer.to_dict())
-    self.__announce(msg=msg, event=JOIN)
-  
-  def announce_jump(self, user_id):
-    # TODO: Message can be none
+  def announce_jump(self, user_id: str) -> None:
     self.__announce(msg=user_id, event=f'{JUMP}-{user_id}')
 
   def __announce(self, msg, event=None):
