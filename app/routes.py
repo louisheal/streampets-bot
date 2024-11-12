@@ -78,11 +78,21 @@ def get_store_items():
   '''Called by store on startup'''
   return {
     'colors': [
-      {'id': 0, 'name': 'Black', 'hex': '#333', 'img': 'url'},
-      {'id': 1, 'name': 'Blue', 'hex': '#00f', 'img': 'url'},
-      {'id': 2, 'name': 'Purple', 'hex': '#f0f', 'img': 'url'},
+      {'id': 0, 'name': 'Blue', 'hex': '#00f', 'img': '/assets/blue-rex.png', 'sku': 'C0'},
+      {'id': 1, 'name': 'Black', 'hex': '#333', 'img': '/assets/black-rex.png', 'sku': 'C1'},
+      {'id': 2, 'name': 'Purple', 'hex': '#f0f', 'img': '/assets/purple-rex.png', 'sku': 'C2'},
     ],
   }
+
+@router.post('/store')
+async def buy_item(request: Request):
+  '''Called by Store onTransactionComplete'''
+  data = await request.json()
+  jwt_data = decode_jwt(data['token'])['data']
+
+  user_id = jwt_data['userId']
+  color_id = database.get_color_id_by_sku(jwt_data['product']['sku'])
+  database.add_owned_color(user_id, color_id)
 
 def decode_jwt(token):
   # TODO: Do this at startup ???

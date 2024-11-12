@@ -8,6 +8,7 @@ class Color:
   name: str
   hex: str
   img: str
+  sku: str
 
   def to_dict(self):
     return {
@@ -15,6 +16,7 @@ class Color:
       'name': self.name,
       'hex': self.hex,
       'img': self.img,
+      'sku': self.sku,
     }
 
 
