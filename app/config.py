@@ -15,6 +15,7 @@ EXT_SECRET = os.getenv('EXT_SECRET')
 REDIRECT_URI = os.getenv('REDIRECT_URI')
 OVERLAY_URL = os.getenv('OVERLAY_URL')
 STORE_URL = os.getenv('STORE_URL')
+ENVIRONMENT = os.getenv('ENVIRONMENT')
 
 BOT_NAMES = ['rexxauto', 'streamelements']
 BOT_PREFIX = '!'

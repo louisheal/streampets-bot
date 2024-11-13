@@ -2,6 +2,9 @@ from typing import TYPE_CHECKING
 
 from twitchio.ext import commands
 
+from app.config import ENVIRONMENT
+from app.consts import PRODUCTION
+
 if TYPE_CHECKING:
   from bot import ChatBot
 
@@ -26,11 +29,12 @@ class PetCommands(commands.Cog):
       await ctx.send(f"{username} that is not an available color!")
       return
 
-    colors = self.bot.db.get_owned_colors(user_id)
-    color = [color for color in colors if color.name.lower() == color_name.lower()]
-    if not color:
-      await ctx.send(f"{username} you do not own the color {color_name}!")
-      return
+    if ENVIRONMENT == PRODUCTION:
+      colors = self.bot.db.get_owned_colors(user_id)
+      color = [color for color in colors if color.name.lower() == color_name.lower()]
+      if not color:
+        await ctx.send(f"{username} you do not own the color {color_name}!")
+        return
 
     self.bot.db.set_current_color(user_id, color[0].id)
     self.bot.announcer.announce_color(user_id, color[0])
