@@ -17,12 +17,19 @@ class PetCommands(commands.Cog):
 
   @commands.command(name='color')
   async def command_color(self, ctx: commands.Context, color_name: str):
-    colors = self.bot.db.get_colors()
     user_id = ctx.author.id
+    username = ctx.author.display_name
 
+    colors = self.bot.db.get_colors()
     color = [color for color in colors if color.name.lower() == color_name.lower()]
     if not color:
-      await ctx.send(f"{color_name} is not an available color!")
+      await ctx.send(f"{username} that is not an available color!")
+      return
+
+    colors = self.bot.db.get_owned_colors(user_id)
+    color = [color for color in colors if color.name.lower() == color_name.lower()]
+    if not color:
+      await ctx.send(f"{username} you do not own the color {color_name}!")
       return
 
     self.bot.db.set_current_color(user_id, color[0].id)

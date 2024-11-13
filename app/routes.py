@@ -76,9 +76,7 @@ def get_user_data(request: Request):
 @router.get('/store')
 def get_store_items():
   '''Called by store on startup'''
-  return {
-    'colors': database.get_colors()
-  }
+  return {'colors': database.get_colors()}
 
 @router.post('/store')
 async def buy_item(request: Request):
