@@ -1,9 +1,7 @@
 import libsql_client
 
 from app.models import Color
-
-
-GREEN = 4
+from app.consts import GREEN_ID
 
 GET_CURRENT_COLOR_QUERY = '''
   SELECT colors.*
@@ -31,6 +29,9 @@ GET_COLOR_BY_SKU_QUERY = '''
   WHERE colors.sku = ?
 '''
 
+class InvalidSkuException(Exception):
+  pass
+
 class Database():
 
   def __init__(self, token: str, url: str) -> None:
@@ -44,7 +45,7 @@ class Database():
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result_set = client.execute(GET_CURRENT_COLOR_QUERY, (user_id,))
       if not result_set:
-        self.set_current_color(user_id, GREEN)
+        self.set_current_color(user_id, GREEN_ID)
         result_set = client.execute(GET_CURRENT_COLOR_QUERY, (user_id,))
       row = result_set.rows[0]
       return row_to_color(row)
@@ -57,7 +58,7 @@ class Database():
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result = client.execute(GET_OWNED_COLORS_QUERY, (user_id,))
       if not result:
-        self.add_owned_color(user_id, GREEN)
+        self.add_owned_color(user_id, GREEN_ID)
         result = client.execute(GET_OWNED_COLORS_QUERY, (user_id,))
       return [row_to_color(row) for row in result.rows]
   
@@ -70,12 +71,13 @@ class Database():
       result = client.execute(GET_COLORS_QUERY)
       return [row_to_color(row) for row in result.rows]
 
-  # TODO: Make custom error (invalid sku) and raise
   def get_color_id_by_sku(self, sku: str) -> str:
-    '''Raises an exception if sku is invalid'''
+    '''Raises an InvalidSkuException if 'sku' is invalid'''
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result = client.execute(GET_COLOR_BY_SKU_QUERY, (sku,))
+      if not result:
+        raise InvalidSkuException(f"Invalid SKU passed: {sku}")
       return result.rows[0][0]
-    
+
 def row_to_color(row) -> Color:
   return Color(row[0], row[1], row[2], row[3], row[4])

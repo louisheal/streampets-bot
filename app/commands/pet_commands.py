@@ -31,8 +31,7 @@ class PetCommands(commands.Cog):
 
     if ENVIRONMENT == PRODUCTION:
       colors = self.bot.db.get_owned_colors(user_id)
-      color = [color for color in colors if color.name.lower() == color_name.lower()]
-      if not color:
+      if color[0].id not in [color.id for color in colors]:
         await ctx.send(f"{username} you do not own the color {color_name}!")
         return
 
