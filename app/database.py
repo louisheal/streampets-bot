@@ -22,7 +22,7 @@ ADD_OWNED_COLOR_QUERY = '''
   INSERT INTO owned_colors (userID, colorID) VALUES (?,?)
 '''
 GET_COLORS_QUERY = '''
-  SELECT id, name, hex, img
+  SELECT *
   FROM colors
 '''
 GET_COLOR_BY_SKU_QUERY = '''
