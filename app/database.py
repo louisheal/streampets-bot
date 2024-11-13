@@ -65,7 +65,7 @@ class Database():
   def get_colors(self) -> list[Color]:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result = client.execute(GET_COLORS_QUERY)
-      return [row_to_color(row) for row in result.rows] + [GREEN]
+      return [row_to_color(row) for row in result.rows]
 
   # TODO: Make custom error (invalid sku) and raise
   def get_color_id_by_sku(self, sku: str) -> str:

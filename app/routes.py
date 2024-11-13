@@ -77,11 +77,7 @@ def get_user_data(request: Request):
 def get_store_items():
   '''Called by store on startup'''
   return {
-    'colors': [
-      {'id': 0, 'name': 'Blue', 'hex': '#00f', 'img': './assets/blue-rex.png', 'sku': 'C0'},
-      {'id': 1, 'name': 'Black', 'hex': '#333', 'img': './assets/black-rex.png', 'sku': 'C1'},
-      {'id': 2, 'name': 'Purple', 'hex': '#f0f', 'img': './assets/purple-rex.png', 'sku': 'C2'},
-    ],
+    'colors': database.get_colors()
   }
 
 @router.post('/store')
