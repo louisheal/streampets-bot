@@ -6,17 +6,17 @@ from typing import Optional
 class Color:
   id: int
   name: str
-  hex: str
   img: str
   sku: str
+  prev: str
 
   def to_dict(self):
     return {
       'id': self.id,
       'name': self.name,
-      'hex': self.hex,
       'img': self.img,
       'sku': self.sku,
+      'prev': self.prev,
     }
 
 

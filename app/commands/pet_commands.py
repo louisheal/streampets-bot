@@ -18,7 +18,7 @@ class PetCommands(commands.Cog):
   async def command_jump(self, ctx):
     self.bot.announcer.announce_jump(ctx.author.id)
 
-  @commands.command(name='color')
+  @commands.command(name='color', aliases=['colour'])
   async def command_color(self, ctx: commands.Context, color_name: str):
     user_id = ctx.author.id
     username = ctx.author.display_name
