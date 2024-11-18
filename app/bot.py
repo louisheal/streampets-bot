@@ -30,12 +30,12 @@ class ChatBot(commands.Bot):
     return self.user_ids
 
   async def event_part(self, user):
-    user_id = get_user_id_by_username(user.name)
     if user.name in BOT_NAMES:
       return
     
-    self.announcer.announce_part(user_id)
+    user_id = get_user_id_by_username(user.name)
     if user_id in self.user_ids:
+      self.announcer.announce_part(user_id)
       self.user_ids.remove(user_id)
 
   async def event_message(self, message):
