@@ -1,41 +1,38 @@
 import json
 import queue
 
+from app.announcers.models import Event
 from app.models import Color, Viewer
 
-JOIN  = 'JOIN'
-PART  = 'PART'
-JUMP  = 'JUMP'
-COLOR = 'COLOR'
 
-
-def format_sse(data: str, event=None) -> str:
+def format_sse(data: str, event: Event = None) -> str:
   msg = f'data: {data}\n\n'
   if event is not None:
     msg = f'event: {event}\n{msg}'
   return msg
 
-class MessageAnnouncer:
+
+class ChannelAnnouncer:
 
   def __init__(self) -> None:
-    self.listeners = []
+    self.listeners: list[queue.Queue] = []
 
-  def listen(self):
+  def listen(self) -> queue.Queue:
     q = queue.Queue()
     self.listeners.append(q)
     return q
   
   def announce_join(self, viewer: Viewer) -> None:
-    self.__announce(msg=json.dumps(viewer.to_dict()), event=JOIN)
+    self.__announce(msg=json.dumps(viewer.to_dict()), event=Event.Join())
 
   def announce_part(self, user_id: str) -> None:
-    self.__announce(msg=user_id, event=PART)
+    self.__announce(msg=user_id, event=Event.Part())
   
   def announce_color(self, user_id: str, color: Color) -> None:
-    self.__announce(msg=json.dumps(color.to_dict()), event=f'{COLOR}-{user_id}')
+    self.__announce(msg=json.dumps(color.to_dict()), event=Event.Color(user_id))
 
   def announce_jump(self, user_id: str) -> None:
-    self.__announce(msg=user_id, event=f'{JUMP}-{user_id}')
+    self.__announce(msg=user_id, event=Event.Jump(user_id))
 
   def __announce(self, msg, event=None):
     msg = format_sse(msg, event)

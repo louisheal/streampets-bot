@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from .announcer import MessageAnnouncer
+from .announcers import MultiChannelAnnouncer
 from .bot import ChatBot
 from .database import Database
 from .config import (
@@ -13,7 +13,7 @@ from .config import (
   STORE_URL,
 )
 
-announcer = MessageAnnouncer()
+announcer = MultiChannelAnnouncer()
 database = Database(DB_TOKEN, DB_URL)
 bot = ChatBot(database, announcer)
 
