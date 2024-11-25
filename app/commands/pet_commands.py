@@ -22,9 +22,6 @@ class PetCommands(commands.Cog):
 
   @commands.command(name='color', aliases=['colour'])
   async def command_color(self, ctx: commands.Context, color_name: str):
-    channel_name = ctx.channel.name
-    channel_id = self.bot.db.get_channel_id(channel_name)
-
     user_id = ctx.author.id
     username = ctx.author.display_name
 
@@ -38,5 +35,8 @@ class PetCommands(commands.Cog):
         await ctx.send(f"{username} you do not own the color {color_name}!")
         return
 
-    self.bot.db.set_current_color(user_id, channel_id, color[0].id)
-    self.bot.announcer.announce_color(channel_name, user_id, color[0])
+    channel_name = ctx.channel.name
+    channel_id = self.bot.db.get_channel_id(channel_name)
+
+    self.bot.db.set_current_color(user_id, channel_id, color.id)
+    self.bot.announcer.announce_color(channel_name, user_id, color)
