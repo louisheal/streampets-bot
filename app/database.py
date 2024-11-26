@@ -60,7 +60,7 @@ ADD_OVERLAY_ID_QUERY = '''
 USER_OWNS_COLOR_QUERY = '''
   SELECT *
   FROM OwnedColors
-  WHERE UserID = ? AND ColorID = ?
+  WHERE ChannelID = ? AND UserID = ? AND ColorID = ?
 '''
 
 
@@ -138,9 +138,9 @@ class Database():
       client.execute(ADD_OVERLAY_ID_QUERY, (channel_id,overlay_id))
       return overlay_id
     
-  def user_owns_color(self, user_id: str, color_id: str) -> bool:
+  def user_owns_color(self, channel_id: str, user_id: str, color_id: str) -> bool:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
-      result = client.execute(USER_OWNS_COLOR_QUERY, (user_id, color_id))
+      result = client.execute(USER_OWNS_COLOR_QUERY, (channel_id,user_id, color_id))
       return len(result.rows) > 0
 
 def row_to_color(row) -> Color:

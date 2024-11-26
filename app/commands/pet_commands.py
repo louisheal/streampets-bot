@@ -30,13 +30,13 @@ class PetCommands(commands.Cog):
       await ctx.send(f"{username} that is not an available color!")
       return
 
-    if ENVIRONMENT == PRODUCTION:
-      if not self.bot.db.user_owns_color(user_id, color.id):
-        await ctx.send(f"{username} you do not own the color {color_name}!")
-        return
-
     channel_name = ctx.channel.name
     channel_id = self.bot.db.get_channel_id(channel_name)
+
+    if ENVIRONMENT == PRODUCTION:
+      if not self.bot.db.user_owns_color(channel_id, user_id, color.id):
+        await ctx.send(f"{username} you do not own the color {color_name}!")
+        return
 
     self.bot.db.set_current_color(user_id, channel_id, color.id)
     self.bot.announcer.announce_color(channel_name, user_id, color)
