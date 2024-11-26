@@ -22,6 +22,7 @@ async def listen(overlayID: str, channelID: str):
   '''Called by Overlay on startup'''
   if overlayID != database.get_overlay_id(channelID):
     return Response(status_code=status.HTTP_403_FORBIDDEN)
+  
   channel_name = get_usernames_by_user_ids([channelID])[0]
   database.update_channel_name(channelID, channel_name)
 
@@ -54,7 +55,9 @@ async def update_color(request: Request):
   '''Called by Store on color change'''
   jwt_data = decode_jwt(request.headers.get('x-extension-jwt'))
   user_id = jwt_data['user_id']
+
   channel_id = jwt_data['channel_id']
+  channel_name = database.get_channel_name(channel_id)
 
   data = await request.json()
   color_id = data['color_id']
@@ -63,9 +66,7 @@ async def update_color(request: Request):
 
   database.set_current_color(user_id, channel_id, color_id)
   color = database.get_current_color(user_id, channel_id)
-  announcer.announce_color(user_id, color)
-
-  return Response(status_code=status.HTTP_200_OK)
+  announcer.announce_color(channel_name, user_id, color)
 
 @router.get('/user')
 def get_user_data(request: Request):
@@ -99,15 +100,12 @@ async def buy_item(request: Request):
 
   transaction_id = receipt_data['transactionId']
 
-  # TODO: Remove, verify in DB (TransactionID: unique=True)
-  if not database.verify_transaction(transaction_id):
-    return
+  # TODO: verify in DB (TransactionID: unique=True)
 
   color_id = data['color_id']
   user_id = receipt_data['userId']
   channel_id = jwt_data['channel_id']
 
-  # TODO: Test that this function fails when transaction_id already exists
   database.add_owned_color(user_id, channel_id, color_id, transaction_id)
 
 #############################
@@ -120,7 +118,6 @@ async def get_overlay_url(request: Request):
 
   overlay_id = database.get_overlay_id(channel_id)
 
-  # TODO: Move url prefix to .env
   return f"{OVERLAY_URL}?overlayID={overlay_id}&channelID={channel_id}"
 
 ###########################

@@ -13,7 +13,8 @@ GET_CURRENT_COLOR_QUERY = '''
   WHERE Colors.id = (SELECT ColorID FROM SelectedColors WHERE UserID = ? AND ChannelID = ?);
 '''
 SET_CURRENT_COLOR_QUERY = '''
-  INSERT OR REPLACE INTO SelectedColors (UserID, ChannelID, ColorID) VALUES (?,?,?)
+  INSERT OR REPLACE INTO SelectedColors (UserID, ChannelID, ColorID)
+  VALUES (?,?,?)
 '''
 GET_OWNED_COLORS_QUERY = '''
   SELECT Colors.*
@@ -21,7 +22,8 @@ GET_OWNED_COLORS_QUERY = '''
   JOIN Colors ON Colors.id = owned_colors.colorID
 '''
 ADD_OWNED_COLOR_QUERY = '''
-  INSERT INTO OwnedColors (UserID, ChannelID, ColorID, TransactionID) VALUES (?,?,?.?)
+  INSERT INTO OwnedColors (ChannelID, UserID, ColorID, TransactionID)
+  VALUES (?,?,?,?)
 '''
 GET_COLORS_QUERY = '''
   SELECT *
@@ -32,15 +34,15 @@ GET_COLOR_BY_NAME_QUERY = '''
   FROM Colors
   WHERE name = ?
 '''
-VERIFY_TRANSACTION_QUERY = '''
-  SELECT *
-  FROM OwnedColors
-  WHERE testID = 'test'
-'''
 GET_CHANNEL_ID_QUERY = '''
   SELECT ChannelID
   FROM Channels
   WHERE ChannelName = ?
+'''
+GET_CHANNEL_NAME_QUERY = '''
+  SELECT ChannelName
+  FROM Channels
+  WHERE ChannelID = ?
 '''
 UPDATE_CHANNEL_NAME_QUERY = '''
   UPDATE Channels
@@ -88,14 +90,15 @@ class Database():
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result = client.execute(GET_OWNED_COLORS_QUERY, (user_id,channel_id))
       if not result:
-        # TODO: Create new TransactionID
-        self.add_owned_color(user_id, channel_id, GREEN_ID, '0')
+        transaction_id = secrets.token_hex(16)
+        self.add_owned_color(user_id, channel_id, GREEN_ID, transaction_id)
         result = client.execute(GET_OWNED_COLORS_QUERY, (user_id,channel_id))
       return [row_to_color(row) for row in result.rows]
   
   def add_owned_color(self, user_id: str, channel_id: str, color_id: str, transaction_id: str) -> None:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
-      client.execute(ADD_OWNED_COLOR_QUERY, (user_id, channel_id, color_id, transaction_id))
+      print(user_id, channel_id, color_id, transaction_id)
+      client.execute(ADD_OWNED_COLOR_QUERY, (channel_id, user_id, color_id, transaction_id))
 
   def get_colors(self) -> list[Color]:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
@@ -108,18 +111,16 @@ class Database():
       if not result.rows:
         return None
       return row_to_color(result.rows[0])
-
-  # TODO: Finish function
-  def verify_transaction(self, transaction_id: str) -> bool:
-    '''Returns True if transaction id is valid (i.e. not seen before)'''
-    with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
-      result = client.execute(VERIFY_TRANSACTION_QUERY)
-      return len(result.rows) == 0
     
   # TODO: Handle case when channel name not found
   def get_channel_id(self, channel_name: str) -> str:
     with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
       result = client.execute(GET_CHANNEL_ID_QUERY, (channel_name,))
+      return result.rows[0][0]
+    
+  def get_channel_name(self, channel_id: str) -> str:
+    with libsql_client.create_client_sync(self.url, auth_token=self.token) as client:
+      result = client.execute(GET_CHANNEL_NAME_QUERY, (channel_id,))
       return result.rows[0][0]
     
   def update_channel_name(self, channel_id: str, channel_name: str):
